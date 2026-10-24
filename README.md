@@ -126,6 +126,6 @@ On the first run, it records the existing catalog and alerts only on the newest 
 
 ---
 
-Built by **Cruz Esquivel**, Security Engineer · [LinkedIn](https://www.linkedin.com/in/your-profile)
+Built by **Cruz Esquivel**, Security Engineer · [LinkedIn](https://www.linkedin.com/in/cruz-e-bb4078227)
 
 © Cruz Esquivel. All rights reserved.
