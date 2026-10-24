@@ -1,0 +1,54 @@
+# Save this file at:  .github/workflows/notify.yml
+name: Cyber notifier
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # every hour at :17 (UTC); GitHub may start it a few minutes late
+  workflow_dispatch:        # adds a "Run workflow" button for manual runs
+
+permissions:
+  contents: write           # needed to commit state.json back to the repo
+
+concurrency:
+  group: cyber-notifier     # never run two copies at once
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run notifier
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          NVD_API_KEY: ${{ secrets.NVD_API_KEY }}
+          MODEL: ${{ vars.MODEL }}
+        run: python main.py
+
+      - name: Save state (which CVEs were already alerted)
+        if: always()
+        run: |
+          [ -f state.json ] || { echo "No state file yet."; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add state.json
+          if git diff --staged --quiet; then
+            echo "No new alerts; state unchanged."
+          else
+            git commit -m "Update alert state [skip ci]"
+            git pull --rebase
+            git push
+          fi
